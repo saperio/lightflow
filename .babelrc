@@ -1,0 +1,29 @@
+{
+	"env" : {
+		"node" : {
+			"plugins": ["add-module-exports"],
+		    "presets": [
+				["modern-node", { "version": "6.5" }]
+			]
+		},
+		"node_lts" : {
+			"plugins": ["add-module-exports"],
+		    "presets": [
+				["modern-node", { "version": "5.12" }]
+			]
+		},
+		"node_old" : {
+			"plugins": ["add-module-exports"],
+		    "presets": [
+				["modern-node", { "version": "0.12" }]
+			]
+		},
+		"browser" : {
+			"plugins": ["transform-es2015-modules-umd"],
+		    "presets": [
+				["es2015"]
+			]
+		}
+	}
+
+}
