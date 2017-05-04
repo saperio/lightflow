@@ -15,7 +15,7 @@ const process = function (flow, data) {
 		flow.doneChain.forEach(item => item.task.call(item.context, data));
 
 		if (flow.looped) {
-			flow.start();
+			flow.start(data);
 		}
 	}
 };

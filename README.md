@@ -7,8 +7,8 @@ Lightflow
 
 ## Introduction
 Lightflow helps to run asynchronous code in synchronous way without the hassle.
-### Usage
 
+### Usage
 To create your flow use `.then`, `.with`, `.error`, `.catch` and `.done` functions. Operate it with `.start`, `.stop` and `.loop`.
 
 ### Quick example

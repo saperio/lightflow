@@ -74,7 +74,7 @@
 			});
 
 			if (flow.looped) {
-				flow.start();
+				flow.start.apply(flow, data);
 			}
 		}
 	};

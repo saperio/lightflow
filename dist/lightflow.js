@@ -64,7 +64,7 @@
 			});
 
 			if (flow.looped) {
-				flow.start();
+				flow.start(data);
 			}
 		}
 	};

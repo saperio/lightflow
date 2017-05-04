@@ -2,14 +2,14 @@ import test from 'ava';
 
 export default function (title, lightflow) {
 	const simpleAsync = fn => setTimeout(fn, 1);
-	const api = 'classic';
+	const label = `lightflow:classic:${title}`;
 
-	test(`lightflow:${api}:${title}: object create`, t => {
+	test(`${label}: object create`, t => {
 	    t.truthy(lightflow());
 	});
 
 
-	test(`lightflow:${api}:${title}: object api check`, t => {
+	test(`${label}: object api check`, t => {
 		const flow = lightflow();
 		const check = fn => t.is(typeof flow[fn], 'function', `check .${fn} func`);
 
@@ -17,7 +17,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: trivial flow`, t => {
+	test.cb(`${label}: trivial flow`, t => {
 		t.plan(1);
 
 		const ret = 3;
@@ -33,7 +33,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: trivial flow with data traverce`, t => {
+	test.cb(`${label}: trivial flow with data traverce`, t => {
 		t.plan(1);
 
 		const ret = 3;
@@ -49,7 +49,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: '.with' api complex call`, t => {
+	test.cb(`${label}: '.with' api complex call`, t => {
 		const taskArray1 = [1, 2, 3];
 		const taskArray2 = [4, 5, 6, 7];
 
@@ -84,7 +84,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: '.error' with continue`, t => {
+	test.cb(`${label}: '.error' with continue`, t => {
 		t.plan(2);
 
 		const flow = lightflow()
@@ -104,7 +104,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: '.catch' api`, t => {
+	test.cb(`${label}: '.catch' api`, t => {
 		t.plan(2);
 
 		const errorMsg = 'error';
@@ -127,7 +127,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: '.loop' api`, t => {
+	test.cb(`${label}: '.loop' api`, t => {
 		t.plan(1);
 
 		let counter = 0;
@@ -149,7 +149,27 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`lightflow:${api}:${title}: '.stop' api with callback`, t => {
+	test.cb(`${label}: '.loop' api with data pass`, t => {
+		t.plan(2);
+
+		let counter = 0;
+		const flow = lightflow()
+		.then(({ next, data }) => simpleAsync(() => {
+			t.is(data, 0, `data must be 0, but it is ${data}`);
+			if (++counter === 2) {
+				flow.loop(false);
+				t.end();
+			}
+
+			next(data);
+		}))
+		.loop()
+		.start(0)
+		;
+	});
+
+
+	test.cb(`${label}: '.stop' api with callback`, t => {
 		t.plan(1);
 
 		const initial = 0;
