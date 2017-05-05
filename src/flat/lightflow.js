@@ -20,23 +20,23 @@ const process = function (flow, ...data) {
 	}
 };
 
+const processInternal = function (flow, ...data) {
+	const { task } = flow.taskChain[flow.idx];
+
+	task
+	.loop(false)
+	.start(...data)
+	;
+};
+
 const processOne = function (flow, ...data) {
-	const item = flow.taskChain[flow.idx];
-	if (item.task instanceof Lightflow) {
-		item.task
-		.done((...args) => process(flow, ...args))
-		.catch(err => processError(flow, err))
-		.loop(false)
-		.start(...data)
-		;
-	} else {
-		item.task.call(
-			item.context,
-			(...args) => process(flow, ...args),
-			err => processError(flow, err),
-			...data
-		);
-	}
+	const { task, context } = flow.taskChain[flow.idx];
+	task.call(
+		context,
+		(...args) => process(flow, ...args),
+		err => processError(flow, err),
+		...data
+	);
 };
 
 const processMany = function (flow, ...data) {
@@ -95,7 +95,18 @@ class Lightflow {
 	}
 
 	then (task, context) {
-		this.taskChain.push({ task, context, processFn : processOne });
+		let processFn;
+		if (task instanceof Lightflow) {
+			task
+			.done((...args) => process(this, ...args))
+			.catch(err => processError(this, err))
+			;
+			processFn = processInternal;
+		} else {
+			processFn = processOne;
+		}
+
+		this.taskChain.push({ task, context, processFn });
 		return this;
 	}
 
@@ -148,7 +159,9 @@ class Lightflow {
 	stop (task, context) {
 		if (this.active) {
 			this.active = false;
-			this.stop_fn = { task, context };
+			if (task) {
+				this.stop_fn = { task, context };
+			}
 		}
 		return this;
 	}

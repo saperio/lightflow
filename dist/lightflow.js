@@ -69,25 +69,27 @@
 		}
 	};
 
+	var processInternal = function processInternal(flow, data) {
+		var task = flow.taskChain[flow.idx].task;
+
+
+		task.loop(false).start(data);
+	};
+
 	var processOne = function processOne(flow, data) {
-		var item = flow.taskChain[flow.idx];
-		if (item.task instanceof Lightflow) {
-			item.task.done(function (d) {
-				return process(flow, d);
-			}).catch(function (err) {
+		var _flow$taskChain$flow$ = flow.taskChain[flow.idx];
+		var task = _flow$taskChain$flow$.task;
+		var context = _flow$taskChain$flow$.context;
+
+		task.call(context, {
+			next: function next(nextData) {
+				return process(flow, nextData);
+			},
+			error: function error(err) {
 				return processError(flow, err);
-			}).loop(false).start(data);
-		} else {
-			item.task.call(item.context, {
-				next: function next(d) {
-					return process(flow, d);
-				},
-				error: function error(err) {
-					return processError(flow, err);
-				},
-				data: data
-			});
-		}
+			},
+			data: data
+		});
 	};
 
 	var processMany = function processMany(flow, data) {
@@ -155,7 +157,21 @@
 		_createClass(Lightflow, [{
 			key: 'then',
 			value: function then(task, context) {
-				this.taskChain.push({ task: task, context: context, processFn: processOne });
+				var _this = this;
+
+				var processFn = void 0;
+				if (task instanceof Lightflow) {
+					task.done(function (nextData) {
+						return process(_this, nextData);
+					}).catch(function (err) {
+						return processError(_this, err);
+					});
+					processFn = processInternal;
+				} else {
+					processFn = processOne;
+				}
+
+				this.taskChain.push({ task: task, context: context, processFn: processFn });
 				return this;
 			}
 		}, {
@@ -220,7 +236,9 @@
 			value: function stop(task, context) {
 				if (this.active) {
 					this.active = false;
-					this.stop_fn = { task: task, context: context };
+					if (task) {
+						this.stop_fn = { task: task, context: context };
+					}
 				}
 				return this;
 			}
