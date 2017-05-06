@@ -8,13 +8,11 @@
   "scripts": {
     "test": "SET BABEL_ENV=browser&&ava --verbose --require babel-register test/index.js",
     "build": "npm run build-node && npm run build-browser",
-    "build-browser": "npm run build-browser-cl && npm run build-browser-fl",
-    "build-browser-cl": "SET BABEL_ENV=browser&&babel -o dist/lightflow.js src/lightflow.js && uglifyjs -c -m --source-map dist/lightflow.min.js.map -o dist/lightflow.min.js dist/lightflow.js",
-    "build-browser-fl": "SET BABEL_ENV=browser&&babel -o dist/flat/lightflow.js src/flat/lightflow.js && uglifyjs -c -m --source-map dist/flat/lightflow.min.js.map -o dist/flat/lightflow.min.js dist/flat/lightflow.js",
+    "build-browser": "SET BABEL_ENV=browser&&babel -o dist/lightflow.js src/lightflow.js && uglifyjs -c -m --source-map dist/lightflow.min.js.map -o dist/lightflow.min.js dist/lightflow.js",
     "build-node": "npm run build-node-current && npm run build-node-lts && npm run build-node-old",
-    "build-node-current": "SET BABEL_ENV=node&&babel -o lib/index.js src/lightflow.js&&babel -o lib/flat/index.js src/flat/lightflow.js",
-    "build-node-lts": "SET BABEL_ENV=node_lts&&babel -o lib/lts/index.js src/lightflow.js&&babel -o lib/lts/flat/index.js src/flat/lightflow.js",
-    "build-node-old": "SET BABEL_ENV=node_old&&babel -o lib/0.x/index.js src/lightflow.js&&babel -o lib/0.x/flat/index.js src/flat/lightflow.js"
+    "build-node-current": "SET BABEL_ENV=node&&babel -o lib/index.js src/lightflow.js",
+    "build-node-lts": "SET BABEL_ENV=node_lts&&babel -o lib/lts/index.js src/lightflow.js",
+    "build-node-old": "SET BABEL_ENV=node_old&&babel -o lib/0.x/index.js src/lightflow.js"
   },
   "repository": {
     "type": "git",
