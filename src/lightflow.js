@@ -83,7 +83,7 @@ const processError = function (flow, err) {
 		.forEach(item => item.task.call(item.context, err))
 		;
 	}
-}
+};
 
 
 class Lightflow {
