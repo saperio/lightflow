@@ -13,7 +13,7 @@ export default function (title, lightflow) {
 		const flow = lightflow();
 		const check = fn => t.is(typeof flow[fn], 'function', `check .${fn} func`);
 
-		['then', 'with', 'error', 'catch', 'done', 'loop', 'start', 'stop'].forEach(check);
+		['then', 'race', 'error', 'catch', 'done', 'loop', 'start', 'stop'].forEach(check);
 	});
 
 
@@ -49,7 +49,7 @@ export default function (title, lightflow) {
 	});
 
 
-	test.cb(`${label}: '.with' api complex call`, t => {
+	/*test.cb(`${label}: '.with' api complex call`, t => {
 		const taskArray1 = [1, 2, 3];
 		const taskArray2 = [4, 5, 6, 7];
 
@@ -81,7 +81,7 @@ export default function (title, lightflow) {
 		})
 		.start()
 		;
-	});
+	});*/
 
 
 	test.cb(`${label}: '.error' with continue`, t => {
