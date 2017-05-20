@@ -45,7 +45,6 @@ type Step = {
 - update tests
 */
 
-
 const process = function (flow, data, label) {
 	// check flow is done and call stopTask if needed
 	if (!flow.active) {
@@ -295,4 +294,4 @@ class Lightflow {
 
 export default function (params) {
 	return new Lightflow(params || {});
-};
+}

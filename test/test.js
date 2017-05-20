@@ -2,10 +2,11 @@ import test from 'ava';
 
 export default function (title, lightflow) {
 	const simpleAsync = fn => setTimeout(fn, 1);
+	const randomAsync = (range, fn) => setTimeout(fn, 1 + Math.random() * (range - 1));
 	const label = `lightflow:${title}`;
 
 	test(`${label}: object create`, t => {
-	    t.truthy(lightflow());
+		t.truthy(lightflow());
 	});
 
 
@@ -49,50 +50,57 @@ export default function (title, lightflow) {
 	});
 
 
-	/*test.cb(`${label}: '.with' api complex call`, t => {
-		const taskArray1 = [1, 2, 3];
-		const taskArray2 = [4, 5, 6, 7];
-
-		t.plan(3);
+	test.cb(`${label}: '.race' simple test`, t => {
+		t.plan(2);
 
 		lightflow()
-		// pass input
-		.then(({ next }) => next({ taskArray1, taskArray2 }))
-		// schedule parallel tasks
-		.with(
-			({ next, count, data }) => {
-				count(data.taskArray1.length);
-				data.taskArray1.forEach(task => {
-					simpleAsync(() => next(task));
-				});
+		.race(
+			// first race task
+			({ next, data }) => {
+				randomAsync(50, () => {
+					next({
+						a: data.a,
+						t1: true
+					});
+				})
 			},
-			({ next, count, data }) => {
-				count(data.taskArray2.length);
-				data.taskArray2.forEach(task => {
-					simpleAsync(() => next(task));
-				});
-			}
+
+			// second race task
+			({ next, data }) => {
+				randomAsync(50, () => {
+					next({
+						a: data.a,
+						t2: true
+					});
+				})
+			},
 		)
-		.done(data => {
-			t.truthy(data);
-			t.is(data.length, taskArray1.length + taskArray2.length);
-			t.deepEqual(data.sort(), [1, 2, 3, 4, 5, 6, 7]);
+		.then(({ next, data }) => {
+			const { a, t1, t2 } = data;
+			t.is(a, 1);
+			t.truthy((t1 || t2) && !(t1 && t2));
 			t.end();
+
+			next();
 		})
-		.start()
+		.start({ a: 1 })
 		;
-	});*/
+	});
 
 
 	test.cb(`${label}: '.error' with continue`, t => {
 		t.plan(2);
 
-		const flow = lightflow()
-		.then(({ next, data }) => simpleAsync(() => next(++data)))
+		lightflow()
+		.then(({ next }) => simpleAsync(() => next()))
 		.then(({ error }) => simpleAsync(() => error()))
-		.error(e => true)
-		.then(({ next }) => {
-			t.pass();
+		.error(() => 1)
+		.catch(() => {
+			t.fail();
+			t.end();
+		})
+		.then(({ next, data }) => {
+			t.is(1, data);
 			next();
 		})
 		.done(() => {
