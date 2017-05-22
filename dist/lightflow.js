@@ -45,6 +45,12 @@
 		};
 	}();
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+		return typeof obj;
+	} : function (obj) {
+		return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+	};
+
 	/*
  .then(task: string | TaskFn | Lightflow, context?: any, ...)
  .race(task: string | TaskFn | Lightflow, context?: any, ...)
@@ -92,6 +98,34 @@
  - update tests
  */
 
+	var clone = function clone(obj) {
+		var copy = void 0;
+
+		if (obj === null || (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) !== 'object') {
+			return obj;
+		}
+
+		if (obj instanceof Array) {
+			copy = [];
+			for (var i = 0; i < obj.length; ++i) {
+				copy[i] = clone(obj[i]);
+			}
+			return copy;
+		}
+
+		if (obj instanceof Object) {
+			copy = {};
+			for (var attr in obj) {
+				if (obj.hasOwnProperty(attr)) {
+					copy[attr] = clone(obj[attr]);
+				}
+			}
+			return copy;
+		}
+
+		return obj;
+	};
+
 	var process = function process(flow, data, label) {
 		// check flow is done and call stopTask if needed
 		if (!flow.active) {
@@ -135,7 +169,7 @@
 			nextStep.taskList.forEach(function (taskDesc) {
 				taskDesc.currentCount = 0;
 				taskDesc.maxCount = 1;
-				taskDesc.processTaskFn(flow, taskDesc, data);
+				taskDesc.processTaskFn(flow, taskDesc, clone(data));
 			});
 		} else {
 			flow.stop();
@@ -365,6 +399,4 @@
 
 		return Lightflow;
 	}();
-
-	;
 });

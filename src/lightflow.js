@@ -45,6 +45,34 @@ type Step = {
 - update tests
 */
 
+const clone = function (obj) {
+	let copy;
+
+	if (obj === null || typeof obj !== 'object') {
+		return obj;
+	}
+
+	if (obj instanceof Array) {
+		copy = [];
+		for (let i = 0; i < obj.length; ++i) {
+			copy[i] = clone(obj[i]);
+		}
+		return copy;
+	}
+
+	if (obj instanceof Object) {
+		copy = {};
+		for (let attr in obj) {
+			if (obj.hasOwnProperty(attr)) {
+				copy[attr] = clone(obj[attr]);
+			}
+		}
+		return copy;
+	}
+
+	return obj;
+};
+
 const process = function (flow, data, label) {
 	// check flow is done and call stopTask if needed
 	if (!flow.active) {
@@ -85,7 +113,7 @@ const process = function (flow, data, label) {
 		nextStep.taskList.forEach(taskDesc => {
 			taskDesc.currentCount = 0;
 			taskDesc.maxCount = 1;
-			taskDesc.processTaskFn(flow, taskDesc, data);
+			taskDesc.processTaskFn(flow, taskDesc, clone(data));
 		});
 	} else {
 		flow.stop();
