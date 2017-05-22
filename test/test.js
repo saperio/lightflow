@@ -3,12 +3,12 @@ import test from 'ava';
 export default function (title, lightflow) {
 	const simpleAsync = fn => setTimeout(fn, 1);
 	const randomAsync = (range, fn) => setTimeout(fn, 1 + Math.random() * (range - 1));
+	const fixAsync = (timeout, fn) => setTimeout(fn, timeout);
 	const label = `lightflow:${title}`;
 
 	test(`${label}: object create`, t => {
 		t.truthy(lightflow());
 	});
-
 
 	test(`${label}: object api check`, t => {
 		const flow = lightflow();
@@ -16,7 +16,6 @@ export default function (title, lightflow) {
 
 		['then', 'race', 'error', 'catch', 'done', 'loop', 'start', 'stop'].forEach(check);
 	});
-
 
 	test.cb(`${label}: trivial flow`, t => {
 		t.plan(1);
@@ -33,7 +32,6 @@ export default function (title, lightflow) {
 		;
 	});
 
-
 	test.cb(`${label}: trivial flow with data traverce`, t => {
 		t.plan(1);
 
@@ -49,36 +47,69 @@ export default function (title, lightflow) {
 		;
 	});
 
+	test.cb(`${label}: nested flows`, t => {
+		t.plan(1);
+
+		const ret = 3;
+
+		lightflow()
+		.then(
+			lightflow()
+			.then(({ next, data}) => simpleAsync(() => next(data)))
+		)
+		.done(data => {
+			t.is(data, ret);
+			t.end();
+		})
+		.start(ret)
+		;
+	});
+
+	test.cb(`${label}: parallel tasks`, t => {
+		t.plan(1);
+
+		const ret = 3;
+
+		lightflow()
+		.then(
+			lightflow()
+			.then(({ next, data}) => simpleAsync(() => next(data)))
+		)
+		.done(data => {
+			t.is(data, ret);
+			t.end();
+		})
+		.start(ret)
+		;
+	});
 
 	test.cb(`${label}: '.race' simple test`, t => {
-		t.plan(2);
+		t.plan(3);
 
 		lightflow()
 		.race(
 			// first race task
 			({ next, data }) => {
 				randomAsync(50, () => {
-					next({
-						a: data.a,
-						t1: true
-					});
+					data.t1 = true;
+					next(data);
 				})
 			},
 
 			// second race task
 			({ next, data }) => {
 				randomAsync(50, () => {
-					next({
-						a: data.a,
-						t2: true
-					});
+					data.t2 = true;
+					next(data);
 				})
-			},
+			}
 		)
+		.then(({ data, next }) => fixAsync(60, () => next(data)))
 		.then(({ next, data }) => {
 			const { a, t1, t2 } = data;
-			t.is(a, 1);
-			t.truthy((t1 || t2) && !(t1 && t2));
+			t.is(a, 1, 'check data pass through');
+			t.truthy(t1 || t2, 'never a one race functions done')
+			t.truthy(!(t1 && t2), 'data from both race function come here!');
 			t.end();
 
 			next();
@@ -87,6 +118,42 @@ export default function (title, lightflow) {
 		;
 	});
 
+	test.cb(`${label}: check flow with labels`, t => {
+		t.plan(1);
+
+		lightflow()
+		.then('label')
+		.then(({ next }) => simpleAsync(() => next()))
+		.then('another-label')
+		.then(({ next }) => simpleAsync(() => next()))
+		.then('last-label')
+		.done(() => {
+			t.pass();
+			t.end();
+		})
+		.start()
+		;
+	});
+
+	test.cb(`${label}: check single skip to label`, t => {
+		t.plan(1);
+
+		lightflow()
+		.then(({ next }) => simpleAsync(() => next(null, 'label')))
+		.then(({ next }) => {
+			t.fail('can\'t get here');
+			t.end();
+			next();
+		})
+		.then('label')
+		.then(({ next }) => {
+			t.pass();
+			t.end();
+			next();
+		})
+		.start()
+		;
+	});
 
 	test.cb(`${label}: '.error' with continue`, t => {
 		t.plan(2);
