@@ -55,12 +55,12 @@ const clone = function (obj) {
 	if (obj instanceof Array) {
 		copy = [];
 		for (let i = 0; i < obj.length; ++i) {
-			copy[i] = clone(obj[i]);
+			copy.push(clone(obj[i]));
 		}
 		return copy;
 	}
 
-	if (obj instanceof Object) {
+	if (typeof obj !== 'object') {
 		copy = {};
 		for (let attr in obj) {
 			if (obj.hasOwnProperty(attr)) {
@@ -72,6 +72,34 @@ const clone = function (obj) {
 
 	return obj;
 };
+
+const extend = function (target, src) {
+	if (src === null || typeof src !== 'object') {
+		return src;
+	}
+
+	const needInit = typeof target !== typeof src || target instanceof Array !== src instanceof Array;
+
+	if (src instanceof Array) {
+		target = needInit ? [] : target;
+		for (let i = 0; i < src.length; ++i) {
+			target[i] = extend(target[i], src[i]);
+		}
+		return target;
+	}
+
+	if (typeof src !== 'object') {
+		target = needInit ? {} : target;
+		for (let attr in src) {
+			if (src.hasOwnProperty(attr)) {
+				target[attr] = extend(target[attr], src[attr]);
+			}
+		}
+		return target;
+	}
+
+	return src;
+}
 
 const process = function (flow, data, label) {
 	// check flow is done and call stopTask if needed
