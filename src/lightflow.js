@@ -60,7 +60,7 @@ const clone = function (obj) {
 		return copy;
 	}
 
-	if (typeof obj !== 'object') {
+	if (typeof obj === 'object') {
 		copy = {};
 		for (let attr in obj) {
 			if (obj.hasOwnProperty(attr)) {
@@ -88,7 +88,7 @@ const extend = function (target, src) {
 		return target;
 	}
 
-	if (typeof src !== 'object') {
+	if (typeof src === 'object') {
 		target = needInit ? {} : target;
 		for (let attr in src) {
 			if (src.hasOwnProperty(attr)) {
