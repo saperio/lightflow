@@ -25,6 +25,7 @@ type Step = {
 	stepId: number;
 	currentCount?: number;
 	maxCount?: number;
+	storage: any;
 }
 
 .then(
@@ -45,34 +46,13 @@ type Step = {
 - update tests
 */
 
-const clone = function (obj) {
-	let copy;
 
-	if (obj === null || typeof obj !== 'object') {
-		return obj;
-	}
-
-	if (obj instanceof Array) {
-		copy = [];
-		for (let i = 0; i < obj.length; ++i) {
-			copy.push(clone(obj[i]));
-		}
-		return copy;
-	}
-
-	if (typeof obj === 'object') {
-		copy = {};
-		for (let attr in obj) {
-			if (obj.hasOwnProperty(attr)) {
-				copy[attr] = clone(obj[attr]);
-			}
-		}
-		return copy;
-	}
-
-	return obj;
-};
-
+/**
+ * extend target with src or clone src if no target
+ * @param  {object} target target object, can be undefined
+ * @param  {object} src    source object
+ * @return {object}        return target or new object if target is undefined
+ */
 const extend = function (target, src) {
 	if (src === null || typeof src !== 'object') {
 		return src;
@@ -99,7 +79,7 @@ const extend = function (target, src) {
 	}
 
 	return src;
-}
+};
 
 const process = function (flow, data, label) {
 	// check flow is done and call stopTask if needed
@@ -113,10 +93,17 @@ const process = function (flow, data, label) {
 	}
 
 	// check if all tasks of current step is done
+	let nextData = data;
 	if (flow.idx >= 0) {
 		const curStep = flow.stepChain[flow.idx];
 		if (++curStep.currentCount < curStep.maxCounth) {
+			curStep.storage = extend(curStep.storage, data);
 			return;
+		}
+
+		if (curStep.storage) {
+			nextData = extend(curStep.storage, data);
+			curStep.storage = null;
 		}
 	}
 
@@ -141,14 +128,14 @@ const process = function (flow, data, label) {
 		nextStep.taskList.forEach(taskDesc => {
 			taskDesc.currentCount = 0;
 			taskDesc.maxCount = 1;
-			taskDesc.processTaskFn(flow, taskDesc, clone(data));
+			taskDesc.processTaskFn(flow, taskDesc, extend(undefined, nextData));
 		});
 	} else {
 		flow.stop();
-		flow.doneChain.forEach(item => item.task.call(item.context, data));
+		flow.doneChain.forEach(item => item.task.call(item.context, nextData));
 
 		if (flow.looped) {
-			flow.start(data);
+			flow.start(nextData);
 		}
 	}
 };
