@@ -118,6 +118,23 @@ export default function (title, lightflow) {
 		;
 	});
 
+	test.cb(`${label}: '.then' with some parallel tasks`, t => {
+		t.plan(2);
+
+		lightflow()
+		.then(
+			({ next, data }) => simpleAsync(() => next({ a: data + 1 })),
+			({ next, data }) => simpleAsync(() => next({ b: data + 2 }))
+		)
+		.done(data => {
+			t.is(data.a, 2);
+			t.is(data.b, 3);
+			t.end();
+		})
+		.start(1)
+		;
+	});
+
 	test.cb(`${label}: check flow with labels`, t => {
 		t.plan(1);
 
