@@ -96,7 +96,7 @@ const process = function (flow, data, label) {
 	let nextData = data;
 	if (flow.idx >= 0) {
 		const curStep = flow.stepChain[flow.idx];
-		if (++curStep.currentCount < curStep.maxCounth) {
+		if (++curStep.currentCount < curStep.maxCount) {
 			curStep.storage = extend(curStep.storage, data);
 			return;
 		}
@@ -193,7 +193,7 @@ const processError = function (flow, err) {
 	if (continueData !== undefined) {
 		// update currentCount in current step
 		// to proceed to the next step
-		flow.stepChain[flow.idx].currentCount = flow.stepChain[flow.idx].maxCounth;
+		flow.stepChain[flow.idx].currentCount = flow.stepChain[flow.idx].maxCount;
 		process(flow, continueData);
 	} else {
 		flow.stop();
