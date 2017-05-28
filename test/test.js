@@ -135,6 +135,56 @@ export default function (title, lightflow) {
 		;
 	});
 
+	test.cb(`${label}: check data fencing`, t => {
+		t.plan(3);
+
+		lightflow()
+
+		// first try to corrupt data object after step is ended
+		.then(({ next, data}) => {
+			data.step1 = 1;
+			next(data);
+
+			fixAsync(10, () => data.step1 = 100);
+		})
+		.then(({ next, data }) => {
+			fixAsync(100, () => {
+				t.is(data.step1, 1, 'data corrupted with prev step');
+				next(data);
+			});
+		})
+
+		// then try to corrupt data from parallel task on same step
+		.then(
+			({ next, data }) => fixAsync(1, () => {
+				data.step2 = 2;
+				next(data);
+			}),
+			({ next, data }) => fixAsync(100, () => {
+				t.truthy(!data.step2, 'data corrupted from parallel task')
+				next(data);
+			})
+		)
+
+		// and the last one - try to corrupt data from concurent task
+		.race(
+			({ next, data }) => fixAsync(1, () => {
+				data.step3 = 3;
+				next(data);
+			}),
+			({ next, data }) => fixAsync(100, () => {
+				t.truthy(!data.step3, 'data corrupted from concurent task')
+				next(data);
+			})
+		)
+		.then(({ next, data }) => fixAsync(150, () => {
+			t.end();
+			next(data);
+		}))
+		.start({})
+		;
+	});
+
 	test.cb(`${label}: check flow with labels`, t => {
 		t.plan(1);
 
