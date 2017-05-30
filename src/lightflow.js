@@ -92,12 +92,17 @@ const process = function (flow, data, label) {
 		return;
 	}
 
+	const { datafencing } = flow.flags;
+
 	// check if all tasks of current step is done
+	// and merge data from all parallel tasks in curStep.storage
 	let nextData = data;
 	if (flow.idx >= 0) {
 		const curStep = flow.stepChain[flow.idx];
 		if (++curStep.currentCount < curStep.maxCount) {
-			curStep.storage = extend(curStep.storage, data);
+			if (datafencing) {
+				curStep.storage = extend(curStep.storage, data);
+			}
 			return;
 		}
 
@@ -128,7 +133,7 @@ const process = function (flow, data, label) {
 		nextStep.taskList.forEach(taskDesc => {
 			taskDesc.currentCount = 0;
 			taskDesc.maxCount = 1;
-			taskDesc.processTaskFn(flow, taskDesc, extend(undefined, nextData));
+			taskDesc.processTaskFn(flow, taskDesc, datafencing ? extend(undefined, nextData) : nextData);
 		});
 	} else {
 		flow.stop();
@@ -253,8 +258,10 @@ const createTaskList = function (flow, params) {
 };
 
 class Lightflow {
-	constructor ({ nothrow }) {
-		this.nothrow = !!nothrow;
+	constructor ({ datafencing }) {
+		this.flags = {
+			datafencing: datafencing === undefined || !!datafencing
+		};
 		this.stepId = 0;
 		this.idx = -1;
 		this.active = false;
