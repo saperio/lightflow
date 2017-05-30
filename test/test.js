@@ -135,6 +135,38 @@ export default function (title, lightflow) {
 		;
 	});
 
+	test.cb(`${label}: check data fencing simple`, t => {
+		t.plan(1);
+
+		let data_1;
+		let data_2_1;
+		let data_2_2;
+
+		lightflow()
+		.then(
+			({ next, data }) => simpleAsync(() => {
+				data_1 = data;
+				next(data);
+			})
+		)
+		.then(
+			({ next, data }) => simpleAsync(() => {
+				data_2_1 = data;
+				next(data);
+			}),
+			({ next, data }) => simpleAsync(() => {
+				data_2_2 = data;
+				next(data);
+			})
+		)
+		.done(data => {
+			t.true(data !== data_1 && data !== data_2_1 && data !== data_2_2);
+			t.end();
+		})
+		.start({ somedata: 1})
+		;
+	});
+
 	test.cb(`${label}: check data fencing`, t => {
 		t.plan(3);
 
@@ -182,6 +214,38 @@ export default function (title, lightflow) {
 			next(data);
 		}))
 		.start({})
+		;
+	});
+
+	test.cb(`${label}: check data fencing disabling`, t => {
+		t.plan(1);
+
+		let data_1;
+		let data_2_1;
+		let data_2_2;
+
+		lightflow({ datafencing: false })
+		.then(
+			({ next, data }) => simpleAsync(() => {
+				data_1 = data;
+				next(data);
+			})
+		)
+		.then(
+			({ next, data }) => simpleAsync(() => {
+				data_2_1 = data;
+				next(data);
+			}),
+			({ next, data }) => simpleAsync(() => {
+				data_2_2 = data;
+				next(data);
+			})
+		)
+		.done(data => {
+			t.true(data === data_1 && data === data_2_1 && data === data_2_2);
+			t.end();
+		})
+		.start({ somedata: 1})
 		;
 	});
 
