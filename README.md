@@ -76,10 +76,9 @@ var lightflow = require('lightflow/lib/0.x');
 
 ## API
 
-* [Classical API](#classicalapi)
-* [Flat API](#flatapi)
+* [`lightflow`](lightflow)
 * [`.then`](#then)
-* [`.with`](#with)
+* [`.race`](#race)
 * [`.error`](#error)
 * [`.catch`](#catch)
 * [`.done`](#done)
@@ -87,65 +86,35 @@ var lightflow = require('lightflow/lib/0.x');
 * [`.stop`](#stop)
 * [`.loop`](#loop)
 
-Almost all API functions take `task` (function) and optional `context` (any object, use as context for task function) parameters. Lightflow supports two versions of API - classical and flat.
-
-### Classical API
-In classical approach all parameters passed to the task function are consolidated into a single object. Each individual parameter can still be obtained by destructuring.
+Almost all API functions take `task` (function) and optional `context` (any object, use as context for task function) parameters. All parameters passed to the task function are consolidated into a single object. Each individual parameter can still be obtained by destructuring.
 
 ```js
-// Classical API
 lightflow()
 .then(({ next, error, data }) => {
 	doAsync(data.data1, data.data2, (out1, out2) => {
 		next({ out1, out2 });
 	});
 })
-.start()
+.start({ data1: 1, data2: 2 })
 ;
 ```
 
-### Flat API
-In flat version parameters are passed as separate arguments.
+### lightflow
 
-```js
-// Flat API
-lightflow()
-.then((next, error, data1, data2) => {
-	doAsync(data1, data2, (out1, out2) => {
-		next(out1, out2);
-	});
-})
-.start()
-;
-```
-
-Flat API available for all versions. To utilize it in the browser use:
-```html
-<script src="flat/lightflow.min.js"></script>
-```
-or
-```html
-<script src="https://unpkg.com/lightflow/dist/flat/lightflow.min.js"></script>
-```
-
-For Node.js do:
-```js
-var lightflow = require('lightflow/lib/flat');
-```
-```js
-var lightflow = require('lightflow/lib/lts/flat');
-```
-```js
-var lightflow = require('lightflow/lib/0.x/flat');
-```
 
 ### .then
-`.then (task[, context])`
-
 ```js
-task({ next, error, data }) // classical
-task(next, error[, data], ...) // flat
+.then(task: string | TaskFn | Lightflow, context?: any, ...)
+type taskFn = (param: taskFnParam) => void
+type taskFnParam = {
+	error: (err?: any) => void;
+	next: (data?: any, label?: string) => void;
+	count: (c: number) => void;
+	data: any;
+}
 ```
+.then take one or more tasks (with optional contexts). If first task is a string, then other parameters are ignored and this step used as label. Else all the tasks run in parallel, their output data objects are merged and passed to the next step. Each task can be function or another Lightflow instance.
+
 
 Adds a task to a chain. Task function params:
 - `next` - function to be called, when task is finished. Can take data for the next task.
@@ -187,7 +156,7 @@ const flow = lightflow()
 flow.start('some data');
 ```
 
-### .with
+### .race
 `.with (task[, context], ...)`
 
 ```js
