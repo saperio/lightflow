@@ -9,13 +9,14 @@ Lightflow
 Lightflow helps to run asynchronous code in synchronous way without the hassle.
 
 ### Usage
-To create your flow use `.then`, `.with`, `.error`, `.catch` and `.done` functions. Operate it with `.start`, `.stop` and `.loop`.
+To create your flow use `.then`, `.race`, `.error`, `.catch` and `.done` functions. Operate it with `.start`, `.stop` and `.loop`.
 
 ### Quick example
 ```js
 lightflow()
 .then(({ next, error, data }) => {
-	fs.readFile(data.filename, (err, content) => err ? error(err) : next({ raw : content, filename : data.filename }));
+	const { filename } = data;
+	fs.readFile(filename, (err, content) => err ? error(err) : next({ raw : content, filename }));
 })
 .then(({ next, error, data }) => {
 	try {
@@ -86,25 +87,20 @@ var lightflow = require('lightflow/lib/0.x');
 * [`.stop`](#stop)
 * [`.loop`](#loop)
 
-Almost all API functions take `task` (function) and optional `context` (any object, use as context for task function) parameters. All parameters passed to the task function are consolidated into a single object. Each individual parameter can still be obtained by destructuring.
-
-```js
-lightflow()
-.then(({ next, error, data }) => {
-	doAsync(data.data1, data.data2, (out1, out2) => {
-		next({ out1, out2 });
-	});
-})
-.start({ data1: 1, data2: 2 })
-;
-```
+All api function are divided in two groups: functions for describe the flow and functions for control the flow. Functions in the first group accept one or more tasks (with optional contexts). All of them return `this` for handy chaining.
 
 ### lightflow
-
+```js
+lightflow(params?: {
+	datafencing?: boolean
+})
+```
+Use `lightflow()` to create new flow instance, you can pass optional params object with:
+* datafencing - copy data object between steps and parallel tasks to prevent corrupting it in one task from another.
 
 ### .then
 ```js
-.then(task: string | TaskFn | Lightflow, context?: any, ...)
+.then(task: string | TaskFn | Lightflow, context?: any, ...): this
 type taskFn = (param: taskFnParam) => void
 type taskFnParam = {
 	error: (err?: any) => void;
@@ -113,7 +109,7 @@ type taskFnParam = {
 	data: any;
 }
 ```
-.then take one or more tasks (with optional contexts). If first task is a string, then other parameters are ignored and this step used as label. Else all the tasks run in parallel, their output data objects are merged and passed to the next step. Each task can be function or another Lightflow instance.
+`.then` take one or more tasks (with optional contexts). If first task is a string, then other parameters are ignored and this step used as label. Else all the tasks run in parallel, their output data objects are merged and passed to the next step. Each task can be function or another Lightflow instance.
 
 
 Adds a task to a chain. Task function params:
@@ -157,7 +153,7 @@ flow.start('some data');
 ```
 
 ### .race
-`.with (task[, context], ...)`
+`.race (task[, context], ...)`
 
 ```js
 task({ next, error, data, count }) // classical
@@ -165,13 +161,13 @@ task(count, next, error[, data], ...) // flat
 ```
 
 Adds several tasks for parallel execution. Task function params:
-- `count` - function, can be used to indicate how many times task assume to call `next` before flow switch to the next task. If not called - `with` will accept only one `next` call and ignore results from the others.
+- `count` - function, can be used to indicate how many times task assume to call `next` before flow switch to the next task. If not called - `.race` will accept only one `next` call and ignore results from the others.
 - `next` - function to be called, when task is finished. Can take data for the next task.
 - `error` - function to be called, when error occurs. You can pass error object to it.
 - `data` - data object from previous task.
 
 
-`with` is designed to run several task functions asynchronously. To return a result from the single task `next` function should be called. All results will be combined into an array and passed to the next flow task.
+`.race` is designed to run several task functions asynchronously. To return a result from the single task `next` function should be called. All results will be combined into an array and passed to the next flow task.
 
 
 In the following example task gets a list of filenames, reads files in parallel and passes results into a list of strings.
