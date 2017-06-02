@@ -43,7 +43,6 @@ type Step = {
 - place throws
 - add comments
 - update readme
-- update tests
 */
 
 
@@ -114,7 +113,7 @@ const process = function (flow, data, label) {
 
 	// check if we need skip to specific step
 	if (typeof label === 'string') {
-		for (let i = 0; i < flow.stepChain.length; ++i) {
+		for (let i = flow.idx + 1; i < flow.stepChain.length; ++i) {
 			if (flow.stepChain[i].taskList[0].label === label) {
 				flow.idx = i;
 				break;
