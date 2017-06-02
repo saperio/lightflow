@@ -320,7 +320,7 @@ class Lightflow {
 
 	start (data) {
 		if (this.active) {
-			return;
+			return this;
 		}
 
 		this.active = true;
