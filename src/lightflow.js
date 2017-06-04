@@ -164,7 +164,7 @@ const processTaskFunction = function (flow, taskDesc, data) {
 			processError(flow, err);
 		}
 	};
-	const count = maxCount => taskDesc.maxCount = maxCount;
+	const count = maxCount => taskDesc.maxCount = maxCount > 1 ? maxCount : 1;
 
 	task.call(context, { next, error, count, data });
 };
