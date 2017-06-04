@@ -95,8 +95,8 @@ lightflow(params?: {
 	datafencing?: boolean
 })
 ```
-Use `lightflow()` to create new flow instance, you can pass optional params object with:
-* datafencing - copy data object between steps and parallel tasks to prevent corrupting it in one task from another.
+Use `lightflow()` to create new flow instance, you can pass optional params object with some (just one for now) flags:
+* datafencing - (default - true) copy data object between steps and parallel tasks to prevent corrupting it in one task from another.
 
 ### .then
 ```js
@@ -109,12 +109,11 @@ type taskFnParam = {
 	data: any;
 }
 ```
-`.then` take one or more tasks (with optional contexts). If first task is a string, then other parameters are ignored and this step used as label. Else all the tasks run in parallel, their output data objects are merged and passed to the next step. Each task can be function or another Lightflow instance.
-
-
-Adds a task to a chain. Task function params:
+`.then` adds one or more tasks (with optional contexts) to the chain. If first task is a string, then other parameters are ignored and this step used as label. Else all the tasks run in parallel, their output data objects are merged and passed to the next step. Each task can be function or another Lightflow instance.
+Task function will receive single parameter with this fields:
 - `next` - function to be called, when task is finished. Can take data for the next task.
 - `error` - function to be called, when error occurred. You can pass error object to it.
+- `count` - function, can be used to indicate how many times task assume to call `next` before flow marks this task as complete. If not called - `.then` will accept only one `next` call and ignore results from the others.
 - `data` - data object from previous task.
 
 Example:
@@ -130,26 +129,23 @@ lightflow()
 		}
 	});
 })
-.start()
+.start(somedata)
 ;
 ```
 
-It's also possible to pass another instance of `Lightflow` to `.then` function as a parameter. All its tasks will be executed and output captured.
-
-Example:
+Here example with two parallel task on one step:
 ```js
-const embedded = lightflow()
-.then(({ next, data }) => {
-	generateUidFromData(data, out => next(out));
-})
-;
+lightflow()
+.then(
+	({ next, error, data }) => {
 
-const flow = lightflow()
-.then(embedded)
-.done(uid => console.log(`This ${uid} generated`))
-;
+	},
+	({ next, error, data }) => {
 
-flow.start('some data');
+	}
+)
+.start()
+;
 ```
 
 ### .race
