@@ -117,7 +117,6 @@ Task function will receive single parameter with this fields:
 - `data` - data object from previous task.
 
 Example:
-
 ```js
 lightflow()
 .then(({ next, error, data }) => {
@@ -137,45 +136,38 @@ Here example with two parallel task on one step:
 ```js
 lightflow()
 .then(
-	({ next, error, data }) => {
-
+	({ next, data }) => {
+		fetchUrl(data.url, remote => next({ remote }));
 	},
 	({ next, error, data }) => {
-
+		fs.readFile(data.filename, (err, local) => err ? error(err) : next({ local }));
 	}
 )
-.start()
+.then(({ next, data }) => {
+	const { remote, local } = data;
+	// ... use remote and local
+	next();
+})
+.start({
+	url: 'google.com',
+	filename: 'config.json'
+})
 ;
 ```
 
-### .race
-`.race (task[, context], ...)`
-
-```js
-task({ next, error, data, count }) // classical
-task(count, next, error[, data], ...) // flat
-```
-
-Adds several tasks for parallel execution. Task function params:
-- `count` - function, can be used to indicate how many times task assume to call `next` before flow switch to the next task. If not called - `.race` will accept only one `next` call and ignore results from the others.
-- `next` - function to be called, when task is finished. Can take data for the next task.
-- `error` - function to be called, when error occurs. You can pass error object to it.
-- `data` - data object from previous task.
-
-
-`.race` is designed to run several task functions asynchronously. To return a result from the single task `next` function should be called. All results will be combined into an array and passed to the next flow task.
-
-
 In the following example task gets a list of filenames, reads files in parallel and passes results into a list of strings.
 If you comment `count(data.length);` line all files will be read but only content of the first one will be passed to the next task.
-
 ```js
 lightflow()
-.with(({ next, count, data }) => {
+.then(({ next, count, data }) => {
+	let res = [];
 	// data - array with filenames
 	count(data.length);
 	data.forEach(filename => {
-		fs.readFile(filename, (err, content) => next(content));
+		fs.readFile(filename, (err, content) => {
+			res.push(content);
+			next(res);
+		});
 	});
 })
 .then(({ next, data }) => {
@@ -185,6 +177,20 @@ lightflow()
 .start(['file1.json', 'file2.json'])
 ;
 ```
+
+### .race
+```js
+.race(task: string | TaskFn | Lightflow, context?: any, ...): this
+type taskFn = (param: taskFnParam) => void
+type taskFnParam = {
+	error: (err?: any) => void;
+	next: (data?: any, label?: string) => void;
+	count: (c: number) => void;
+	data: any;
+}
+```
+`.race` same as `.then`, except only result from the first completed task use for the next step.
+
 
 More complex example with two functions and their specific contexts:
 ```js
