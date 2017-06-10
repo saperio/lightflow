@@ -2,7 +2,7 @@ import test from 'ava';
 
 export default function (title, lightflow) {
 	const simpleAsync = fn => setTimeout(fn, 1);
-	const label = `lightflow:${title}`;
+	const label = `lightflow:flat:${title}`;
 
 	test(`${label}: object create`, t => {
 	    t.truthy(lightflow());
@@ -23,7 +23,7 @@ export default function (title, lightflow) {
 		const ret = 3;
 
 		lightflow()
-		.then(({ next }) => next(ret))
+		.then(next => next(ret))
 		.done(data => {
 			t.is(data, ret);
 			t.end()
@@ -39,7 +39,7 @@ export default function (title, lightflow) {
 		const ret = 3;
 
 		lightflow()
-		.then(({ next, data }) => next(data))
+		.then((next, error, data) => next(data))
 		.done(data => {
 			t.is(data, ret);
 			t.end();
@@ -57,18 +57,18 @@ export default function (title, lightflow) {
 
 		lightflow()
 		// pass input
-		.then(({ next }) => next({ taskArray1, taskArray2 }))
+		.then(next => next(taskArray1, taskArray2))
 		// schedule parallel tasks
 		.with(
-			({ next, count, data }) => {
-				count(data.taskArray1.length);
-				data.taskArray1.forEach(task => {
+			(count, next, error, ta1) => {
+				count(ta1.length);
+				ta1.forEach(task => {
 					simpleAsync(() => next(task));
 				});
 			},
-			({ next, count, data }) => {
-				count(data.taskArray2.length);
-				data.taskArray2.forEach(task => {
+			(count, next, error, ta1, ta2) => {
+				count(ta2.length);
+				ta2.forEach(task => {
 					simpleAsync(() => next(task));
 				});
 			}
@@ -76,7 +76,7 @@ export default function (title, lightflow) {
 		.done(data => {
 			t.truthy(data);
 			t.is(data.length, taskArray1.length + taskArray2.length);
-			t.deepEqual(data.sort(), [1, 2, 3, 4, 5, 6, 7]);
+			t.deepEqual(data.sort(), [[1], [2], [3], [4], [5], [6], [7]]);
 			t.end();
 		})
 		.start()
@@ -88,10 +88,10 @@ export default function (title, lightflow) {
 		t.plan(2);
 
 		const flow = lightflow()
-		.then(({ next, data }) => simpleAsync(() => next(++data)))
-		.then(({ error }) => simpleAsync(() => error()))
+		.then((next, error, data) => simpleAsync(() => next(++data)))
+		.then((next, error) => simpleAsync(() => error()))
 		.error(e => true)
-		.then(({ next }) => {
+		.then(next => {
 			t.pass();
 			next();
 		})
@@ -110,11 +110,11 @@ export default function (title, lightflow) {
 		const errorMsg = 'error';
 
 		lightflow()
-		.then(({ error }) => simpleAsync(() => error(errorMsg)))
+		.then((next, error) => simpleAsync(() => error(errorMsg)))
 		.catch(e => {
 			t.is(e, errorMsg);
 		})
-		.then(({ next }) => simpleAsync(() => next()))
+		.then(next => simpleAsync(() => next()))
 		.catch(e => {
 			t.is(e, errorMsg);
 			t.end();
@@ -133,7 +133,7 @@ export default function (title, lightflow) {
 		let counter = 0;
 
 		const flow = lightflow()
-		.then(({ next }) => simpleAsync(() => {
+		.then(next => simpleAsync(() => {
 			++counter;
 			if (counter === 2) {
 				flow.loop(false);
@@ -154,7 +154,7 @@ export default function (title, lightflow) {
 
 		let counter = 0;
 		const flow = lightflow()
-		.then(({ next, data }) => simpleAsync(() => {
+		.then((next, error, data) => simpleAsync(() => {
 			t.is(data, 0, `data must be 0, but it is ${data}`);
 			if (++counter === 2) {
 				flow.loop(false);
@@ -176,16 +176,16 @@ export default function (title, lightflow) {
 		const final = 3;
 
 		const flow = lightflow()
-		.then(({ next, data }) => simpleAsync(() => next(++data)))
-		.then(({ next, data }) => simpleAsync(() => next(++data)))
-		.then(({ next, data }) => {
+		.then((next, error, data) => simpleAsync(() => next(++data)))
+		.then((next, error, data) => simpleAsync(() => next(++data)))
+		.then((next, error, data) => {
 			simpleAsync(() => next(++data));
 			flow.stop(last => {
 				t.is(last, final);
 				t.end();
 			});
 		})
-		.then(({ next, data }) => simpleAsync(() => {
+		.then((next, error, data) => simpleAsync(() => {
 			t.fail('execute next task after stop called!');
 			t.end();
 			next(data);
