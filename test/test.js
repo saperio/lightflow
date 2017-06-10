@@ -104,7 +104,7 @@ export default function (title, lightflow) {
 				})
 			}
 		)
-		.then(({ data, next }) => fixAsync(60, () => next(data)))
+		.then(({ next, data }) => fixAsync(60, () => next(data)))
 		.then(({ next, data }) => {
 			const { a, t1, t2 } = data;
 			t.is(a, 1, 'check data pass through');
