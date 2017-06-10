@@ -81,7 +81,7 @@ var lightflow = require('lightflow/lib/0.x');
 
 ## API
 
-* [`lightflow`](lightflow)
+* [`lightflow`](#lightflow-1)
 * [`.then`](#then)
 * [`.race`](#race)
 * [`.error`](#error)
