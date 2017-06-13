@@ -1,3 +1,8 @@
+## This version of Lightflow is deprecated!
+Use new [version](https://github.com/saperio/lightflow), checkout CHANGELOG for API changes.
+
+---
+
 Lightflow
 ===========
 
