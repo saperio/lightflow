@@ -51,60 +51,7 @@
 		return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
 	};
 
-	/*
- .then(task: string | TaskFn | Lightflow, context?: any, ...)
- .race(task: string | TaskFn | Lightflow, context?: any, ...)
- 
- type taskFnParam = {
- 	error: (err?: any) => void;
- 	next: (data?: any, label?: string) => void;
- 	count: (c: number) => void;
- 	data: any;
- }
- 
- type taskFn = (param: taskFnParam) => void;
- 
- type Task = {
- 	currentCount?: number = 0;
- 	maxCount?: number = 1;
- 	task?: TaskFn | Lightflow;
- 	context?: any;
- 	label?: string;
- 	processTaskFn: Function;
- }
- 
- type Step = {
- 	taskList: Task[];
- 	stepId: number;
- 	currentCount?: number;
- 	maxCount?: number;
- 	storage: any;
- }
- 
- .then(
- 	({ next, data, count }) => {
- 		count(10);
- 		// read some io
- 	},
- 	({ next, data, count }) => {
- 		read another io
- 	}
- )
- */
-
-	/* todo
- - place throws
- - add comments
- - update readme
- - update tests
- */
-
-	/**
-  * extend target with src or clone src if no target
-  * @param  {object} target target object, can be undefined
-  * @param  {object} src    source object
-  * @return {object}        return target or new object if target is undefined
-  */
+	// extend target with src or clone src if no target
 	var extend = function extend(target, src) {
 		if (src === null || (typeof src === 'undefined' ? 'undefined' : _typeof(src)) !== 'object') {
 			return src;
@@ -147,12 +94,18 @@
 			return;
 		}
 
+		var datafencing = flow.flags.datafencing;
+
+
 		// check if all tasks of current step is done
+		// and merge data from all parallel tasks in curStep.storage
 		var nextData = data;
 		if (flow.idx >= 0) {
 			var curStep = flow.stepChain[flow.idx];
 			if (++curStep.currentCount < curStep.maxCount) {
-				curStep.storage = extend(curStep.storage, data);
+				if (datafencing) {
+					curStep.storage = extend(curStep.storage, data);
+				}
 				return;
 			}
 
@@ -164,7 +117,7 @@
 
 		// check if we need skip to specific step
 		if (typeof label === 'string') {
-			for (var i = 0; i < flow.stepChain.length; ++i) {
+			for (var i = flow.idx + 1; i < flow.stepChain.length; ++i) {
 				if (flow.stepChain[i].taskList[0].label === label) {
 					flow.idx = i;
 					break;
@@ -183,7 +136,7 @@
 			nextStep.taskList.forEach(function (taskDesc) {
 				taskDesc.currentCount = 0;
 				taskDesc.maxCount = 1;
-				taskDesc.processTaskFn(flow, taskDesc, extend(undefined, nextData));
+				taskDesc.processTaskFn(flow, taskDesc, datafencing ? extend(undefined, nextData) : nextData);
 			});
 		} else {
 			flow.stop();
@@ -220,7 +173,7 @@
 			}
 		};
 		var count = function count(maxCount) {
-			return taskDesc.maxCount = maxCount;
+			return taskDesc.maxCount = isNaN(parseInt(maxCount)) || maxCount < 1 ? 1 : maxCount;
 		};
 
 		task.call(context, { next: next, error: error, count: count, data: data });
@@ -309,21 +262,56 @@
 
 	var Lightflow = function () {
 		function Lightflow(_ref) {
-			var nothrow = _ref.nothrow;
+			var datafencing = _ref.datafencing;
 
 			_classCallCheck(this, Lightflow);
 
-			this.nothrow = !!nothrow;
+			this.flags = {
+				datafencing: datafencing === undefined || !!datafencing
+			};
 			this.stepId = 0;
 			this.idx = -1;
 			this.active = false;
 			this.looped = false;
 
+			/*
+   type Task = {
+   	currentCount?: number = 0;
+   	maxCount?: number = 1;
+   	task?: TaskFn | Lightflow;
+   	context?: any;
+   	label?: string;
+   	processTaskFn: Function;
+   }
+   type Step = {
+   	taskList: Task[];
+   	stepId: number;
+   	currentCount?: number;
+   	maxCount: number;
+   	storage: any;
+   }
+   stepChain: Step[];
+   */
 			this.stepChain = [];
+
 			this.doneChain = [];
 			this.errorChain = [];
 			this.catchChain = [];
 		}
+
+		/*
+  type taskFnParam = {
+  	error: (err?: any) => void;
+  	next: (data?: any, label?: string) => void;
+  	count: (c: number) => void;
+  	data: any;
+  }
+  
+  type taskFn = (param: taskFnParam) => void;
+  
+  then(task: string | TaskFn | Lightflow, context?: any, ...): this
+  */
+
 
 		_createClass(Lightflow, [{
 			key: 'then',
@@ -389,7 +377,7 @@
 			key: 'start',
 			value: function start(data) {
 				if (this.active) {
-					return;
+					return this;
 				}
 
 				this.active = true;
