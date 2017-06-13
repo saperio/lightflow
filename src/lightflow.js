@@ -1,57 +1,4 @@
-/*
-.then(task: string | TaskFn | Lightflow, context?: any, ...)
-.race(task: string | TaskFn | Lightflow, context?: any, ...)
-
-type taskFnParam = {
-	error: (err?: any) => void;
-	next: (data?: any, label?: string) => void;
-	count: (c: number) => void;
-	data: any;
-}
-
-type taskFn = (param: taskFnParam) => void;
-
-type Task = {
-	currentCount?: number = 0;
-	maxCount?: number = 1;
-	task?: TaskFn | Lightflow;
-	context?: any;
-	label?: string;
-	processTaskFn: Function;
-}
-
-type Step = {
-	taskList: Task[];
-	stepId: number;
-	currentCount?: number;
-	maxCount?: number;
-	storage: any;
-}
-
-.then(
-	({ next, data, count }) => {
-		count(10);
-		// read some io
-	},
-	({ next, data, count }) => {
-		read another io
-	}
-)
-*/
-
-/* todo
-- place throws
-- add comments
-- update readme
-*/
-
-
-/**
- * extend target with src or clone src if no target
- * @param  {object} target target object, can be undefined
- * @param  {object} src    source object
- * @return {object}        return target or new object if target is undefined
- */
+// extend target with src or clone src if no target
 const extend = function (target, src) {
 	if (src === null || typeof src !== 'object') {
 		return src;
@@ -266,12 +213,43 @@ class Lightflow {
 		this.active = false;
 		this.looped = false;
 
+		/*
+		type Task = {
+			currentCount?: number = 0;
+			maxCount?: number = 1;
+			task?: TaskFn | Lightflow;
+			context?: any;
+			label?: string;
+			processTaskFn: Function;
+		}
+		type Step = {
+			taskList: Task[];
+			stepId: number;
+			currentCount?: number;
+			maxCount: number;
+			storage: any;
+		}
+		stepChain: Step[];
+		*/
 		this.stepChain = [];
+
 		this.doneChain = [];
 		this.errorChain = [];
 		this.catchChain = [];
 	}
 
+	/*
+	type taskFnParam = {
+		error: (err?: any) => void;
+		next: (data?: any, label?: string) => void;
+		count: (c: number) => void;
+		data: any;
+	}
+
+	type taskFn = (param: taskFnParam) => void;
+
+	then(task: string | TaskFn | Lightflow, context?: any, ...): this
+	*/
 	then (...params) {
 		const taskList = createTaskList(this, params);
 		const maxCount = taskList.length;
@@ -283,6 +261,9 @@ class Lightflow {
 		return this;
 	}
 
+	/*
+	race (task: string | TaskFn | Lightflow, context?: any, ...): this
+	*/
 	race (...params) {
 		const taskList = createTaskList(this, params);
 		const maxCount = 1;
