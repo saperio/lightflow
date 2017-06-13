@@ -164,7 +164,7 @@ const processTaskFunction = function (flow, taskDesc, data) {
 			processError(flow, err);
 		}
 	};
-	const count = maxCount => taskDesc.maxCount = maxCount > 1 ? maxCount : 1;
+	const count = maxCount => taskDesc.maxCount = (isNaN(parseInt(maxCount)) || maxCount < 1) ? 1 : maxCount;
 
 	task.call(context, { next, error, count, data });
 };
