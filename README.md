@@ -8,6 +8,9 @@ Lightflow
 ## Introduction
 Lightflow helps to run asynchronous code in synchronous way without the hassle.
 
+> **Important note**<br>
+> Version 1 of Lightflow is not compatible with version 2+. Version 1 documentation, etc. has been moved to [this branch](https://github.com/saperio/lightflow/tree/1.x).
+
 ### Usage
 - Create an *lightflow* instance `lightflow()`.
 - Describe your flow by adding a series of asynchronous functions - *steps* with `.then`, `.race`, `.error`, `.catch` and `.done`.
